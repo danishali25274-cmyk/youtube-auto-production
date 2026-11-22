@@ -1,5 +1,11 @@
 name: Build documentary Short
 on:
+  push:
+    branches: [main]
+    paths:
+      - "make_short.py"
+      - "requirements.txt"
+      - ".github/workflows/build-short.yml"
   workflow_dispatch:
 jobs:
   build:
