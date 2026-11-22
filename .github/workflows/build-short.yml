@@ -29,12 +29,12 @@ jobs:
           pip install -r requirements.txt piper-tts
       - name: Render science Short
         env:
-          TOPIC: \${{ github.event.inputs.topic || 'auto' }}
+          TOPIC: ${{ github.event.inputs.topic || 'auto' }}
         run: python make_short.py --topic "$TOPIC"
       - name: Upload video and review files
         uses: actions/upload-artifact@v4
         with:
-          name: science-short-\${{ github.run_number }}
+          name: science-short-${{ github.run_number }}
           path: output/
           if-no-files-found: error
           retention-days: 7
