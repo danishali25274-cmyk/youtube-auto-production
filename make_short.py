@@ -190,6 +190,33 @@ def main():
         "note": "Verify claims against the source before publishing."
     }, indent=2), encoding="utf-8")
 
+    # Create a review-ready YouTube upload package alongside the MP4.
+    upload_title = f"{topic['title']} | Science Facts #Shorts"
+    upload_description = (
+        f"{topic['narration']}\\n\\n"
+        f"Learn more: {topic['source']}\\n"
+        "Subscribe for more science and fascinating facts.\\n\\n"
+        "#Shorts #Science #Facts #ScienceFacts"
+    )
+    upload_package = {
+        "title": upload_title[:100],
+        "description": upload_description,
+        "tags": ["science", "science facts", "facts", "education", "shorts", topic["slug"]],
+        "pinned_comment_suggestion": "Which science fact surprised you most? Share your answer below!",
+        "source_to_check_before_posting": topic["source"],
+        "publishing_status": "DRAFT - review video, facts, captions, audio and rights before upload"
+    }
+    (OUT / "upload_package.json").write_text(
+        json.dumps(upload_package, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    (OUT / "upload_package.txt").write_text(
+        "TITLE\\n" + upload_package["title"] + "\\n\\nDESCRIPTION\\n" +
+        upload_package["description"] + "\\n\\nTAGS\\n" +
+        ", ".join(upload_package["tags"]) + "\\n\\nPINNED COMMENT\\n" +
+        upload_package["pinned_comment_suggestion"] + "\\n\\nREVIEW\\n" +
+        upload_package["publishing_status"] + "\\n", encoding="utf-8"
+    )
+
     voice = OUT / "voice.wav"
     run(["piper", "--model", ASSETS / (VOICE + ".onnx"),
          "--config", ASSETS / (VOICE + ".onnx.json"),
