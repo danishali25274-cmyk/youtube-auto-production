@@ -1,28 +1,53 @@
-# YouTube Auto Production
+# Science Facts YouTube Shorts Automation
 
-Starter pipeline for a 30-second vertical history Short using Piper TTS, FFmpeg, Pillow and Whisper captions.
+A scheduled build pipeline for short science explainers.
 
-## One-line build (Linux / Colab after dependencies are installed)
+## What it currently automates
 
-```bash
-python make_short.py --topic "American Revolution"
-```
+- Selects one topic per day from a curated science-facts rotation.
+- Uses an original short narration and five matching motion-graphic cards.
+- Generates British-English narration with Piper TTS.
+- Creates subtitles with faster-whisper.
+- Renders a vertical 1080x1920 MP4 with FFmpeg.
+- Writes a topic/source review file and uploads the MP4 plus review files as a GitHub Actions artifact.
 
-Install once:
+## Daily schedule
+
+GitHub Actions is configured for 02:00 UTC daily (09:00 Cambodia time). It selects the next topic using the day of year. Artifacts are retained for seven days.
+
+## Run a topic manually
+
+Open **Actions → Daily science Short → Run workflow** and enter one of:
+
+- `venus`
+- `neutron-stars`
+- `deep-ocean`
+- `lightning`
+- `james-webb`
+- `octopus`
+- `blue-sky`
+- `moon-distance`
+
+Or enter `auto`.
+
+## Local build
+
+Install FFmpeg and Python dependencies:
 
 ```bash
 sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
 pip install -r requirements.txt piper-tts
+python make_short.py --topic auto
 ```
 
-The MP4 is written to `output/american_revolution_short.mp4`. Whisper transcribes the generated voice and burns captions into the video. Add a properly licensed MP3 at `assets/music.mp3` to use your own background music; otherwise a quiet generated ambient tone is used.
+The MP4 and review files are written to `output/`.
 
-## GitHub Actions
-Open **Actions → Build documentary Short → Run workflow**. Download the resulting `american-revolution-short` artifact when the run finishes.
+## Important limits and review
 
-## Important
-- This creates original graphic slides, not archival photographs or live footage.
-- The default Piper voice is British English male Alan. Check the voice model card and voice-data licence before commercial use; the Piper software licence does not automatically cover voice data.
-- Captions and historical claims need human review before publishing.
-- No YouTube upload is automated. Review rights, policies and the final MP4 yourself.
-- GitHub Actions and free Colab usage have limits; neither is unlimited.
+- The current visuals are original animated graphic cards, not stock footage or generated cinematic video.
+- Topics are selected from a curated fact library; live vidIQ research and AI-generated research scripts are not connected yet.
+- The Piper voice is synthetic. Check the specific voice model and voice-data licence before any commercial use.
+- Review every fact against the source URL in `output/topic.json`, and review pronunciation, captions, audio and video before publishing.
+- The pipeline does **not** upload or schedule videos to YouTube. No YouTube OAuth connection or upload secret is configured.
+- GitHub Actions minutes, model downloads and free service quotas are limited; this is not unlimited hosting.
+- No video is guaranteed to be monetized. YouTube makes the final eligibility and policy decisions.
