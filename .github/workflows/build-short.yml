@@ -1,0 +1,25 @@
+name: Build documentary Short
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt piper-tts
+      - name: Render MP4
+        run: python make_short.py --topic "American Revolution"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: american-revolution-short
+          path: output/
+          if-no-files-found: error
