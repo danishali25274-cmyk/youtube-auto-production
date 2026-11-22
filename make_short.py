@@ -171,6 +171,7 @@ def main():
     args = parser.parse_args()
 
     topic = choose_topic(args.topic)
+    print("Selected science topic:", topic["title"], flush=True)
     ASSETS.mkdir(parents=True, exist_ok=True)
     OUT.mkdir(parents=True, exist_ok=True)
     WORK.mkdir(parents=True, exist_ok=True)
