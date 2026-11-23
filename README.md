@@ -1,53 +1,41 @@
-# Science Facts YouTube Shorts Automation
+# Facts Empire — Automated Science Shorts
 
-A scheduled build pipeline for short science explainers.
+GitHub Actions builds a vertical science Short every day and when production code changes.
 
-## What it currently automates
+## Automated pipeline
+1. Select a science topic from the curated topic library (or choose one in Actions).
+2. Download candidate video clips from Wikimedia Commons and keep only files whose metadata indicates public domain, CC0, CC BY or CC BY-SA licensing.
+3. Save creator, source URL and licence details in \`output/asset_manifest.json\`.
+4. Generate British-English narration with Piper.
+5. Render 1080×1920 vertical scenes with FFmpeg; use moving footage when a suitable clip is found and animated graphics as fallback.
+6. Generate word-level Whisper captions, burn them into the MP4, and export SRT.
+7. Package the MP4 and review files as a GitHub Actions artifact for seven days.
 
-- Selects one topic per day from a curated science-facts rotation.
-- Uses an original short narration and five matching motion-graphic cards.
-- Generates British-English narration with Piper TTS.
-- Creates subtitles with faster-whisper.
-- Renders a vertical 1080x1920 MP4 with FFmpeg.
-- Writes a topic/source review file and uploads the MP4 plus review files as a GitHub Actions artifact.
+## Run manually
+Open **Actions → Daily science Short → Run workflow** and choose:
+- \`water-resistant\`
+- \`venus\`
+- \`neutron-stars\`
+- \`deep-ocean\`
+- \`lightning\`
+- \`james-webb\`
+- \`octopus\`
+- \`blue-sky\`
+- \`moon-distance\`
+- \`auto\`
 
-## Daily schedule
-
-GitHub Actions is configured for 02:00 UTC daily (09:00 Cambodia time). It selects the next topic using the day of year. Artifacts are retained for seven days.
-
-## Run a topic manually
-
-Open **Actions → Daily science Short → Run workflow** and enter one of:
-
-- `venus`
-- `neutron-stars`
-- `deep-ocean`
-- `lightning`
-- `james-webb`
-- `octopus`
-- `blue-sky`
-- `moon-distance`
-
-Or enter `auto`.
-
-## Local build
-
-Install FFmpeg and Python dependencies:
-
-```bash
+## Local run
+\`\`\`bash
 sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
 pip install -r requirements.txt piper-tts
-python make_short.py --topic auto
-```
+python fetch_footage.py water-resistant
+python make_short.py --topic water-resistant
+\`\`\`
 
-The MP4 and review files are written to `output/`.
-
-## Important limits and review
-
-- The current visuals are original animated graphic cards, not stock footage or generated cinematic video.
-- Topics are selected from a curated fact library; live vidIQ research and AI-generated research scripts are not connected yet.
-- The Piper voice is synthetic. Check the specific voice model and voice-data licence before any commercial use.
-- Review every fact against the source URL in `output/topic.json`, and review pronunciation, captions, audio and video before publishing.
-- The pipeline does **not** upload or schedule videos to YouTube. No YouTube OAuth connection or upload secret is configured.
-- GitHub Actions minutes, model downloads and free service quotas are limited; this is not unlimited hosting.
-- No video is guaranteed to be monetized. YouTube makes the final eligibility and policy decisions.
+## Honest limitations / required review
+- Wikimedia Commons may not have a suitable clip for every scene. If none is found, the build falls back to original animated graphics; inspect the asset manifest before calling the result a real-footage edit.
+- The Piper voice model is synthetic. Verify the specific model/data licence before commercial use; do not assume every voice model is monetization-safe.
+- Music must be supplied as a separately licensed \`assets/music.mp3\`; if absent, the current renderer uses a simple generated tonal bed, not a commercial music track.
+- vidIQ research is not part of the GitHub build yet. The connected vidIQ account currently has only two credits remaining, so do not spend credits without approval.
+- The pipeline creates a review-ready artifact. It does not upload or schedule to YouTube. No YouTube OAuth / upload credential is configured, and publishing requires explicit approval.
+- GitHub Actions usage is subject to GitHub account quotas. No unlimited free video generation or monetization is promised.
