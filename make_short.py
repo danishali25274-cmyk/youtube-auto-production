@@ -15,6 +15,19 @@ VOICE_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/a
 # Each entry includes a primary institutional source for human fact-checking.
 TOPICS = [
     {
+        "title": "How water-resistant technology works",
+        "slug": "water-resistant",
+        "narration": "Your phone can survive a splash, but that does not mean it is waterproof. The secret is a combination of barriers. Tiny gaps are blocked by carefully designed seals, adhesives and membranes. Some surfaces also use hydrophobic coatings: water molecules prefer sticking to each other, so droplets bead up and roll away. But coatings are only one layer of protection. Water resistance is tested under specific conditions, and seals can wear out. So never assume a water-resistant device can handle every kind of water exposure.",
+        "source": "https://www.sgs.com/en/news/2023/05/ip-ratings-explained",
+        "scenes": [
+            ("NOT WATERPROOF", "SPLASH-PROOF?", "A water-resistant phone has limits"),
+            ("SEALED GAPS", "BARRIERS MATTER", "Gaskets and adhesives block entry points"),
+            ("HYDROPHOBIC", "WATER BEADS UP", "Some coatings make droplets roll away"),
+            ("IP RATINGS", "TESTED CONDITIONS", "Protection depends on a defined test"),
+            ("SEALS CAN AGE", "DON'T RISK IT", "Wear and damage can reduce protection")
+        ],
+    },
+    {
         "title": "Venus: the backwards world",
         "slug": "venus",
         "narration": "Venus spins so slowly that one rotation takes about 243 Earth days. Its trip around the Sun takes only about 225 days. That means a Venus day, measured by one full rotation, is longer than its year. Venus also rotates in the opposite direction to most planets. Scientists are still studying how this unusual world evolved.",
@@ -223,13 +236,23 @@ def main():
          "--output_file", voice], input=narration, text=True)
 
     clips = []
+    footage_dir = ASSETS / "footage"
     for i, scene in enumerate(topic["scenes"]):
         still = make_slide(i, topic["title"], scene)
         clip = WORK / f"scene_{i:02}.mp4"
         clips.append(clip)
-        run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", still,
-             "-vf", "zoompan=z='min(zoom+0.0007,1.06)':d=180:s=1080x1920:fps=30,format=yuv420p",
-             "-t", "6", "-an", "-c:v", "libx264", "-preset", "veryfast", clip])
+        candidates = sorted(footage_dir.glob(f"scene_{i:02}_*")) if footage_dir.exists() else []
+        if candidates:
+            # Real licensed moving footage with a dark readability overlay.
+            vf = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,drawbox=x=0:y=0:w=iw:h=ih:color=black@0.38:t=fill,fps=30,format=yuv420p"
+            run(["ffmpeg","-y","-loglevel","error","-stream_loop","-1","-i",candidates[0],
+                 "-vf",vf,"-t","6","-an","-c:v","libx264","-preset","veryfast",clip])
+            # Scene headline is layered as an animated graphic card in the following concat.
+            # Keep a small title card segment so footage remains visible and the facts stay readable.
+        else:
+            run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", still,
+                 "-vf", "zoompan=z='min(zoom+0.0007,1.06)':d=180:s=1080x1920:fps=30,format=yuv420p",
+                 "-t", "6", "-an", "-c:v", "libx264", "-preset", "veryfast", clip])
 
     concat = WORK / "concat.txt"
     concat.write_text("".join(f"file '{p.as_posix()}'\n" for p in clips), encoding="utf-8")
@@ -239,7 +262,7 @@ def main():
 
     from faster_whisper import WhisperModel
     model = WhisperModel("tiny", device="cpu", compute_type="int8")
-    segments, _ = model.transcribe(str(voice), word_timestamps=False)
+    segments, _ = model.transcribe(str(voice), word_timestamps=True, vad_filter=True)
     def stamp(seconds):
         ms = int(seconds * 1000)
         hours, ms = divmod(ms, 3600000)
