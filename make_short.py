@@ -243,12 +243,20 @@ def main():
         clips.append(clip)
         candidates = sorted(footage_dir.glob(f"scene_{i:02}_*")) if footage_dir.exists() else []
         if candidates:
-            # Real licensed moving footage with a dark readability overlay.
-            vf = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,drawbox=x=0:y=0:w=iw:h=ih:color=black@0.38:t=fill,fps=30,format=yuv420p"
+            # Real licensed moving footage plus a bold on-screen scientific callout.
+            title_file = WORK / f"title_{i:02}.txt"
+            subtitle_file = WORK / f"subtitle_{i:02}.txt"
+            title_file.write_text(scene[1], encoding="utf-8")
+            subtitle_file.write_text(scene[2], encoding="utf-8")
+            vf = ("scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
+                  "drawbox=x=0:y=0:w=iw:h=ih:color=black@0.35:t=fill,"
+                  "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
+                  f"textfile={title_file}:fontcolor=white:fontsize=68:x=(w-text_w)/2:y=h*0.37:borderw=3:bordercolor=black,"
+                  "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:"
+                  f"textfile={subtitle_file}:fontcolor=white:fontsize=34:x=(w-text_w)/2:y=h*0.48:borderw=2:bordercolor=black,"
+                  "fps=30,format=yuv420p")
             run(["ffmpeg","-y","-loglevel","error","-stream_loop","-1","-i",candidates[0],
                  "-vf",vf,"-t","6","-an","-c:v","libx264","-preset","veryfast",clip])
-            # Scene headline is layered as an animated graphic card in the following concat.
-            # Keep a small title card segment so footage remains visible and the facts stay readable.
         else:
             run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", still,
                  "-vf", "zoompan=z='min(zoom+0.0007,1.06)':d=180:s=1080x1920:fps=30,format=yuv420p",
@@ -270,8 +278,19 @@ def main():
         secs, ms = divmod(ms, 1000)
         return f"{hours:02}:{minutes:02}:{secs:02},{ms:03}"
     rows = []
-    for number, segment in enumerate(segments, 1):
-        rows.extend([str(number), f"{stamp(segment.start)} --> {stamp(segment.end)}", segment.text.strip(), ""])
+    number = 1
+    for segment in segments:
+        words = getattr(segment, "words", None) or []
+        if words:
+            for word in words:
+                token = word.word.strip()
+                if not token:
+                    continue
+                rows.extend([str(number), f"{stamp(word.start)} --> {stamp(word.end)}", token, ""])
+                number += 1
+        else:
+            rows.extend([str(number), f"{stamp(segment.start)} --> {stamp(segment.end)}", segment.text.strip(), ""])
+            number += 1
     captions = OUT / "captions.srt"
     captions.write_text("\n".join(rows), encoding="utf-8")
 
